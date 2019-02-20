@@ -1,0 +1,14 @@
+[package]
+name    = "influxdb"
+version = "0.1.0"
+authors = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
+edition = "2018"
+
+[dependencies]
+log          = {version = "*"}
+serde        = {version = "*", features = ["derive"]}
+serde_json   = {version = "*"}
+chrono       = {version = "*", features = ["serde"]}
+reqwest      = {version = "*"}
+error-chain  = {version = "*"}
+flexi_logger = {version = "*"}
