@@ -93,9 +93,11 @@ impl ClientTrait for Client
                 .body(line)
                 .send()?;
 
-            if result.status().is_success() {
+            if result.status().is_success()
+            {
                 continue;
-            } else if result.status().is_client_error() || result.status().is_server_error()
+            }
+            else if result.status().is_client_error() || result.status().is_server_error()
             {
                 let error: ResponseError = result.json()?;
                 return Err(format!("Could not commit measurement to db: {}", error.error).into());

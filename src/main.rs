@@ -13,8 +13,6 @@ use chrono::Utc as ChronoUtc;
 use flexi_logger as logger;
 use flexi_logger::Logger;
 
-use error_chain::ChainedError;
-
 use std::time::Duration;
 use std::thread::sleep;
 
@@ -46,6 +44,6 @@ fn main()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 
     if let Err(e) = run() {
-        println!("{}", e.display_chain())
+        println!("{}", e)
     }
 }

@@ -65,11 +65,8 @@ impl FileBackloggedClient
 
         for line in bfrd.lines()
         {
-            match line
-            {
-                Ok(l)  => { points.push(json::from_str(&l)?); }
-                Err(e) => { Err(format!("Failed to read line from file backlog: {}", e))?; }
-            }
+            let ln = line?;
+            points.push(json::from_str(&ln)?);
         }
 
         Ok(points)

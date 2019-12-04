@@ -10,5 +10,4 @@ serde        = {version = "*", features = ["derive"]}
 serde_json   = {version = "*"}
 chrono       = {version = "*", features = ["serde"]}
 reqwest      = {version = "*"}
-error-chain  = {version = "*"}
 flexi_logger = {version = "*"}
