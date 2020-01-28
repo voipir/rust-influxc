@@ -78,6 +78,8 @@ impl ClientTrait for Client
         {
             let line = point.to_line();
 
+            debug!("Inserting to influxdb: {}", line);
+
             let mut params = vec![
                 ("db",        self.target_db.to_owned()),
                 ("precision", point.precision.to_string()),
@@ -87,17 +89,15 @@ impl ClientTrait for Client
                 params.push(("rp", policy.to_owned()));
             }
 
-            let mut result = self.client.post(&url)
+            let result = self.client.post(&url)
                 .basic_auth(&self.target_creds.user, Some(&self.target_creds.passwd))
                 .query(&params)
                 .body(line)
                 .send()?;
 
-            if result.status().is_success()
-            {
+            if result.status().is_success() {
                 continue;
-            }
-            else if result.status().is_client_error() || result.status().is_server_error()
+            } else if result.status().is_client_error() || result.status().is_server_error()
             {
                 let error: ResponseError = result.json()?;
                 return Err(format!("Could not commit measurement to db: {}", error.error).into());

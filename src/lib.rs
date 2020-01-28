@@ -7,9 +7,8 @@
 use serde_json as json;
 use serde_json::error::Error as JsonError;
 
-use reqwest::Error    as ReqwError;
-use reqwest::UrlError as ReqwUrlError;
-use reqwest::Client   as ReqwClient;
+use reqwest::Error            as ReqwError;
+use reqwest::blocking::Client as ReqwClient;
 
 type ChronoDateTime = chrono::DateTime<chrono::Utc>;
 
