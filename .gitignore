@@ -1,7 +1,9 @@
 #
 #
 #
+**/*.rs.bk
+
 /ignore
 /target
 
-**/*.rs.bk
+Cargo.lock

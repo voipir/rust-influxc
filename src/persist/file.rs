@@ -48,6 +48,8 @@ impl FileBackloggedClient
         let count = bfrd.lines()
             .count();
 
+        info!("Influx backlog has {} backlogged entries waiting to be written to database", count);
+
         Ok(Self {client, path, handle, count})
     }
 }
@@ -138,6 +140,8 @@ impl ClientTrait for FileBackloggedClient
         {
             if self.count > 0
             {
+                info!("Working off infux backlog of {} entries", self.count);
+
                 let points = self.read_measurements()?;
 
                 if let Ok(()) = self.client.write_many(&points)
