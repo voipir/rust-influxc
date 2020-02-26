@@ -1,15 +1,15 @@
 [package]
 name    = "influxdb"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
 edition = "2018"
 
 [dependencies]
-log          = {version = "*"}
-serde        = {version = "*", features = ["derive"]}
-serde_json   = {version = "*"}
-chrono       = {version = "*", features = ["serde"]}
-reqwest      = {version = "*", features = ["blocking", "json"]}
+log          = {version = "0.4.8"}
+serde        = {version = "1.0.104", features = ["derive"]}
+serde_json   = {version = "1.0.48"}
+chrono       = {version = "0.4.10", features = ["serde"]}
+reqwest      = {version = "0.10.2", features = ["blocking", "json"]}
 
 [dev-dependencies]
-flexi_logger = {version = "*"}
+flexi_logger = {version = "0.14.8"}
