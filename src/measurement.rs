@@ -87,7 +87,11 @@ impl Measurement
             {
                 Precision::Nanoseconds  => { line += &ts.timestamp_nanos().to_string();  }
                 Precision::Milliseconds => { line += &ts.timestamp_millis().to_string(); }
-                _ => unimplemented!()  // TODO
+
+                Precision::Microseconds => { line += &(ts.timestamp_nanos()  *   1000).to_string(); }
+                Precision::Seconds      => { line += &(ts.timestamp_millis() /     60).to_string(); }
+                Precision::Minutes      => { line += &(ts.timestamp_millis() /   3600).to_string(); }
+                Precision::Hours        => { line += &(ts.timestamp_millis() / 216000).to_string(); }
             }
         }
 
