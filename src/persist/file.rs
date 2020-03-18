@@ -8,6 +8,8 @@
 use crate::Client;
 use crate::ClientTrait;
 use crate::Measurement;
+
+use crate::InfluxError;
 use crate::InfluxResult;
 
 use crate::json;
@@ -51,6 +53,26 @@ impl FileBackloggedClient
         info!("Influx backlog has {} backlogged entries waiting to be written to database", count);
 
         Ok(Self {client, path, handle, count})
+    }
+
+    pub fn commit_measurements(&mut self) -> InfluxResult<()>
+    {
+        info!("Working off infux backlog of {} entries", self.count);
+
+        let points = self.read_measurements()?;
+
+        if let Err(e) = self.client.write_many(&points) {
+            Err(InfluxError::Error(format!("Unable to commit backlogged measurements: {}", e)))
+        } else {
+            if let Err(e) = self.truncate_measurements()
+            {
+                let msg = format!("Failed to eliminate/truncate measurements from file: {}", e);
+                error!("{}", msg);
+                panic!("{}", msg);
+            } else {
+                Ok(())
+            }
+        }
     }
 }
 
@@ -138,20 +160,8 @@ impl ClientTrait for FileBackloggedClient
         }
         else
         {
-            if self.count > 0
-            {
-                info!("Working off infux backlog of {} entries", self.count);
-
-                let points = self.read_measurements()?;
-
-                if let Ok(()) = self.client.write_many(&points)
-                {
-                    if let Err(e) = self.truncate_measurements()
-                    {
-                        let msg = format!("Failed to eliminate/truncate measurements from file: {}", e);
-                        error!("{}", msg); panic!("{}", msg);
-                    }
-                }
+            if self.count > 0 {
+                self.commit_measurements().ok();
             }
         }
 
