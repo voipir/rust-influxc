@@ -87,10 +87,21 @@ impl FileBackloggedClient
         let mut points = Vec::new();
         let     bfrd   = BufReader::new(&self.handle);
 
-        for line in bfrd.lines()
+        for (num, line) in bfrd.lines().enumerate()
         {
             let ln = line?;
-            points.push(json::from_str(&ln)?);
+
+            match json::from_str(&ln)
+            {
+                Ok(point) => {
+                    points.push(point)
+                }
+
+                Err(e) => {
+                    error!("Failed to read line {}", num);
+                    return Err(e.into());
+                }
+            }
         }
 
         Ok(points)
