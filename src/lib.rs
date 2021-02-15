@@ -18,8 +18,8 @@ type ChronoDateTime = chrono::DateTime<chrono::Utc>;
 mod error;
 mod value;
 mod client;
-mod persist;
 mod precision;
+mod backlogging;
 mod credentials;
 mod measurement;
 
@@ -33,10 +33,10 @@ pub use value::Value;
 
 pub use client::Client;
 
-pub use persist::Backlog;
-pub use persist::FileBacklog;
-
 pub use precision::Precision;
+
+pub use backlogging::Backlog;
+pub use backlogging::FileBacklog;
 
 pub use credentials::Credentials;
 
