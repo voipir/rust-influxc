@@ -26,18 +26,18 @@ mod measurement;
 //
 // Exports
 //
-pub use self::error::InfluxError;
-pub use self::error::InfluxResult;
+pub use error::InfluxError;
+pub use error::InfluxResult;
 
-pub use self::value::Value;
+pub use value::Value;
 
-pub use self::client::Client;
-pub use self::client::ClientTrait;
+pub use client::Client;
 
-pub use self::persist::FileBackloggedClient;
+pub use persist::Backlog;
+pub use persist::FileBacklog;
 
-pub use self::precision::Precision;
+pub use precision::Precision;
 
-pub use self::credentials::Credentials;
+pub use credentials::Credentials;
 
-pub use self::measurement::Measurement;
+pub use measurement::Measurement;

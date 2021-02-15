@@ -5,11 +5,10 @@
 //!
 //! WAL approach: TODO
 //!
-use crate::Client;
-use crate::ClientTrait;
+use super::Backlog;
+
 use crate::Measurement;
 
-use crate::InfluxError;
 use crate::InfluxResult;
 
 use crate::json;
@@ -25,19 +24,17 @@ use std::io::Write;
 use std::io::BufWriter;
 
 
-pub struct FileBackloggedClient
+pub struct FileBacklog
 {
-    client: Client,
-
     path:   String,
     handle: File,
     count:  usize,
 }
 
 
-impl FileBackloggedClient
+impl FileBacklog
 {
-    pub fn new(client: Client, path: String) -> InfluxResult<Self>
+    pub fn new(path: String) -> InfluxResult<Self>
     {
         let handle = OpenOptions::new()
             .read(true)
@@ -52,35 +49,14 @@ impl FileBackloggedClient
 
         info!("Influx backlog has {} backlogged entries waiting to be written to database", count);
 
-        Ok(Self {client, path, handle, count})
-    }
-
-    pub fn commit_measurements(&mut self) -> InfluxResult<()>
-    {
-        info!("Working off infux backlog of {} entries", self.count);
-
-        let points = self.read_measurements()?;
-
-        if let Err(e) = self.client.write_many(&points) {
-            Err(InfluxError::Error(format!("Unable to commit backlogged measurements: {}", e)))
-        } else {
-            if let Err(e) = self.truncate_measurements()
-            {
-                let msg = format!("Failed to eliminate/truncate measurements from file: {}", e);
-                error!("{}", msg);
-                panic!("{}", msg);
-            } else {
-                Ok(())
-            }
-        }
+        Ok(Self {path, handle, count})
     }
 }
 
 
-/// private interface
-impl FileBackloggedClient
+impl Backlog for FileBacklog
 {
-    fn read_measurements(&mut self) -> InfluxResult<Vec<Measurement>>
+    fn read_pending(&mut self) -> InfluxResult<Vec<Measurement>>
     {
         self.handle.seek(SeekFrom::Start(0))?;  // go to begining of file
 
@@ -107,7 +83,7 @@ impl FileBackloggedClient
         Ok(points)
     }
 
-    fn write_measurements(&mut self, points: &[Measurement]) -> InfluxResult<()>
+    fn write_pending(&mut self, points: &[Measurement]) -> InfluxResult<()>
     {
         self.handle.seek(SeekFrom::End(0))?;  // go to end of file
 
@@ -128,7 +104,7 @@ impl FileBackloggedClient
         Ok(())
     }
 
-    fn truncate_measurements(&mut self) -> InfluxResult<()>
+    fn truncate_pending(&mut self) -> InfluxResult<()>
     {
         self.handle = OpenOptions::new()
             .read(true)
@@ -137,44 +113,6 @@ impl FileBackloggedClient
             .open(&self.path)?;
 
         self.count = 0;
-
-        Ok(())
-    }
-}
-
-
-impl ClientTrait for FileBackloggedClient
-{
-    fn write_one(&mut self, point: Measurement) -> InfluxResult<()>
-    {
-        self.write_many(&[point])?;
-
-        Ok(())
-    }
-
-    /// FIXME currently if connection comes on and off during backlog processing, it will not truncate. This means that
-    /// all processed backlog measurements will be processed again once connection comes back up. InfluxDB will
-    /// deduplicate this automatically, but it can explode the file due to never being truncated on flaky connections.
-    /// Also the longer the backlog becomes, less the probability of it being truncated due to the increased lenght/time
-    /// required to play back onto the DB.
-    fn write_many(&mut self, points: &[Measurement]) -> InfluxResult<()>
-    {
-        if let Err(e) = self.client.write_many(points)
-        {
-            error!("Error while inserting to influxdb, proceeding to append to backlog: {}", e);
-
-            if let Err(e) = self.write_measurements(points)
-            {
-                let msg = format!("Failed to write measurements to file: {}", e);
-                error!("{}", msg); panic!("{}", msg);
-            }
-        }
-        else
-        {
-            if self.count > 0 {
-                self.commit_measurements().ok();
-            }
-        }
 
         Ok(())
     }

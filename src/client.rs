@@ -3,17 +3,13 @@
 //!
 use crate::Credentials;
 use crate::Measurement;
+
+use crate::Backlog;
+
+use crate::InfluxError;
 use crate::InfluxResult;
-use crate::FileBackloggedClient;
 
 use crate::ReqwClient;
-
-
-pub trait ClientTrait
-{
-    fn write_one(&mut self, point: Measurement) -> InfluxResult<()>;
-    fn write_many(&mut self, points: &[Measurement]) -> InfluxResult<()>;
-}
 
 
 #[derive(Deserialize)]
@@ -24,9 +20,12 @@ pub struct ResponseError
 
 
 #[derive(Debug)]
-pub struct Client
+pub struct Client<B>
+    where B: Backlog
 {
     client: ReqwClient,
+
+    backlog: Option<B>,
 
     target_url:   String,
     target_db:    String,
@@ -35,7 +34,8 @@ pub struct Client
 }
 
 
-impl Client
+impl<B> Client<B>
+    where B: Backlog
 {
     pub fn new(url: String, db: String, creds: Credentials) -> InfluxResult<Self>
     {
@@ -46,27 +46,73 @@ impl Client
 
         Ok(Self {
             client,
+            backlog: None,
+
             target_url:   url,
             target_db:    db,
             target_creds: creds,
         })
     }
 
-    pub fn into_file_backlogged(self, path: String) -> InfluxResult<FileBackloggedClient>
+    pub fn backlog(mut self, backlog: B) -> Self
     {
-        Ok(FileBackloggedClient::new(self, path)?)
+        self.backlog = Some(backlog); self
+    }
+
+    pub fn write_one(&mut self, point: Measurement) -> InfluxResult<()>
+    {
+        self.write_backlog()?;
+        self.write_all(&[point])
+    }
+
+    pub fn write_many(&mut self, points: &[Measurement]) -> InfluxResult<()>
+    {
+        self.write_backlog()?;
+        self.write_all(points)
     }
 }
 
 
-impl ClientTrait for Client
+impl<B> Client<B>
+    where B: Backlog
 {
-    fn write_one(&mut self, point: Measurement) -> InfluxResult<()>
+    fn write_backlog(&mut self) -> InfluxResult<()>
     {
-        self.write_many(&[point])
+        let points = if let Some(blg) = &mut self.backlog {
+            blg.read_pending()?
+        } else {
+            Vec::new()
+        };
+
+        if ! points.is_empty()
+        {
+            info!("Found {} backlogged entries, proceeding to commit", points.len());
+
+            if let Err(e) = self.write_all(&points) {
+                Err(InfluxError::Error(format!("Unable to commit backlogged measurements: {}", e)))
+            }
+            else
+            {
+                let result = self.backlog.as_mut()
+                    .unwrap()
+                    .truncate_pending();
+
+                if let Err(e) = result
+                {
+                    let msg = format!("Failed to eliminate/truncate measurements from backlog: {}", e);
+                    error!("{}", msg);
+                    panic!("{}", msg);
+                }
+                else {
+                    Ok(())
+                }
+            }
+        } else {
+            Ok(())
+        }
     }
 
-    fn write_many(&mut self, points: &[Measurement]) -> InfluxResult<()>
+    fn write_all(&self, points: &[Measurement]) -> InfluxResult<()>
     {
         let url = format!("{}/write", self.target_url);
 

@@ -2,7 +2,8 @@
 //! Testing Sandbox
 //!
 use influxdb::Client;
-use influxdb::ClientTrait;
+use influxdb::FileBacklog;
+
 use influxdb::Precision;
 use influxdb::Credentials;
 use influxdb::Measurement;
@@ -19,9 +20,11 @@ use std::thread::sleep;
 
 fn run() -> InfluxResult<()>
 {
-    let     creds  = Credentials::new("testuser".into(), "testpasswd".into());
+    let creds   = Credentials::new("testuser".into(), "testpasswd".into());
+    let backlog = FileBacklog::new("./ignore/backlog.json".into())?;
+
     let mut client = Client::new("http://127.0.0.1:8044".into(), "test".into(), creds)?
-        .into_file_backlogged("./ignore/backlog.json".into())?;
+        .backlog(backlog);
 
     loop
     {
