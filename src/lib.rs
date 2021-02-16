@@ -18,6 +18,7 @@ type ChronoDateTime = chrono::DateTime<chrono::Utc>;
 mod error;
 mod value;
 mod client;
+mod record;
 mod precision;
 mod backlogging;
 mod credentials;
@@ -32,6 +33,8 @@ pub use error::InfluxResult;
 pub use value::Value;
 
 pub use client::Client;
+
+pub use record::Record;
 
 pub use precision::Precision;
 

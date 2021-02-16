@@ -2,24 +2,19 @@
 //! Measurement to be Stored
 //!
 use crate::Value;
-use crate::Precision;
 
 use crate::ChronoDateTime;
 
 use std::collections::BTreeMap;
 
-use std::default::Default;
 
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct Measurement
 {
     pub name:      String,
     pub tags:      BTreeMap<String, String>,
     pub fields:    BTreeMap<String, Value>,
     pub timestamp: Option<ChronoDateTime>,
-    pub retpolicy: Option<String>,
-    pub precision: Precision,
 }
 
 
@@ -27,12 +22,19 @@ impl Measurement
 {
     pub fn new(name: &str) -> Self
     {
-        Self {name: name.to_owned(), ..Self::default()}
+        Self {
+            name: name.to_owned(),
+
+            tags:   BTreeMap::new(),
+            fields: BTreeMap::new(),
+
+            timestamp: None,
+        }
     }
 
-    pub fn with_timestamp(name: &str, timestamp: ChronoDateTime, precision: Precision) -> Self
+    pub fn timestamp(mut self, timestamp: ChronoDateTime) -> Self
     {
-        Self {name: name.to_owned(), timestamp: Some(timestamp), precision, ..Self::default()}
+        self.timestamp = Some(timestamp); self
     }
 
     pub fn add_tag(mut self, key: &str, value: &str) -> Self
@@ -44,12 +46,6 @@ impl Measurement
     pub fn add_field(mut self, key: &str, value: Value) -> Self
     {
         self.fields.insert(key.to_owned(), value);
-        self
-    }
-
-    pub fn set_retention_policy(mut self, policy: &str) -> Self
-    {
-        self.retpolicy = Some(policy.to_string());
         self
     }
 
@@ -79,37 +75,22 @@ impl Measurement
             line += &fieldline;
         }
 
-        if let Some(ts) = self.timestamp
-        {
-            line += " ";
+        // if let Some(ts) = self.timestamp
+        // {
+        //     line += " ";
 
-            match self.precision
-            {
-                Precision::Nanoseconds  => { line += &ts.timestamp_nanos().to_string();  }
-                Precision::Microseconds => { line += &(ts.timestamp_nanos() * 1000).to_string(); }
-                Precision::Milliseconds => { line += &ts.timestamp_millis().to_string(); }
-                Precision::Seconds      => { line += &(ts.timestamp() ).to_string(); }
-                Precision::Minutes      => { line += &(ts.timestamp() /   60).to_string(); }
-                Precision::Hours        => { line += &(ts.timestamp() / 3600).to_string(); }
-            }
-        }
+        //     match self.precision
+        //     {
+        //         Precision::Nanoseconds  => { line += &ts.timestamp_nanos().to_string();  }
+        //         Precision::Microseconds => { line += &(ts.timestamp_nanos() * 1000).to_string(); }
+        //         Precision::Milliseconds => { line += &ts.timestamp_millis().to_string(); }
+        //         Precision::Seconds      => { line += &(ts.timestamp() ).to_string(); }
+        //         Precision::Minutes      => { line += &(ts.timestamp() /   60).to_string(); }
+        //         Precision::Hours        => { line += &(ts.timestamp() / 3600).to_string(); }
+        //     }
+        // }
 
         line
     }
 }
 
-
-impl Default for Measurement
-{
-    fn default() -> Self
-    {
-        Self {
-            name:      String::new(),
-            tags:      BTreeMap::new(),
-            fields:    BTreeMap::new(),
-            timestamp: None,
-            retpolicy: None,
-            precision: Precision::Nanoseconds,
-        }
-    }
-}

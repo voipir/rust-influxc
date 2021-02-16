@@ -7,7 +7,7 @@
 //!
 use super::Backlog;
 
-use crate::Measurement;
+use crate::Record;
 
 use crate::InfluxResult;
 
@@ -24,6 +24,7 @@ use std::io::Write;
 use std::io::BufWriter;
 
 
+#[derive(Debug)]
 pub struct FileBacklog
 {
     path:   String,
@@ -56,7 +57,7 @@ impl FileBacklog
 
 impl Backlog for FileBacklog
 {
-    fn read_pending(&mut self) -> InfluxResult<Vec<Measurement>>
+    fn read_pending(&mut self) -> InfluxResult<Vec<Record>>
     {
         self.handle.seek(SeekFrom::Start(0))?;  // go to begining of file
 
@@ -83,7 +84,7 @@ impl Backlog for FileBacklog
         Ok(points)
     }
 
-    fn write_pending(&mut self, points: &[Measurement]) -> InfluxResult<()>
+    fn write_pending(&mut self, points: &[Record]) -> InfluxResult<()>
     {
         self.handle.seek(SeekFrom::End(0))?;  // go to end of file
 

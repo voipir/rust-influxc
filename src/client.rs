@@ -9,6 +9,9 @@ use crate::Backlog;
 use crate::InfluxError;
 use crate::InfluxResult;
 
+use crate::Record;
+use crate::Precision;
+
 use crate::ReqwClient;
 
 
@@ -20,22 +23,19 @@ pub struct ResponseError
 
 
 #[derive(Debug)]
-pub struct Client<B>
-    where B: Backlog
+pub struct Client<'c>
 {
     client: ReqwClient,
 
-    backlog: Option<B>,
+    backlog: Option<&'c mut dyn Backlog>,
 
     target_url:   String,
     target_db:    String,
     target_creds: Credentials,
-
 }
 
 
-impl<B> Client<B>
-    where B: Backlog
+impl<'c> Client<'c>
 {
     pub fn new(url: String, db: String, creds: Credentials) -> InfluxResult<Self>
     {
@@ -54,42 +54,37 @@ impl<B> Client<B>
         })
     }
 
-    pub fn backlog(mut self, backlog: B) -> Self
+    pub fn backlog(mut self, backlog: &'c mut dyn Backlog) -> Self
     {
         self.backlog = Some(backlog); self
     }
 
-    pub fn write_one(&mut self, point: Measurement) -> InfluxResult<()>
+    pub fn write(&mut self, record: &Record) -> InfluxResult<()>
     {
         self.write_backlog()?;
-        self.write_all(&[point])
-    }
+        self.write_record(&record)?;
 
-    pub fn write_many(&mut self, points: &[Measurement]) -> InfluxResult<()>
-    {
-        self.write_backlog()?;
-        self.write_all(points)
+        Ok(())
     }
 }
 
 
-impl<B> Client<B>
-    where B: Backlog
+impl<'c> Client<'c>
 {
     fn write_backlog(&mut self) -> InfluxResult<()>
     {
-        let points = if let Some(blg) = &mut self.backlog {
+        let records = if let Some(blg) = &mut self.backlog {
             blg.read_pending()?
         } else {
             Vec::new()
         };
 
-        if ! points.is_empty()
+        for record in records
         {
-            info!("Found {} backlogged entries, proceeding to commit", points.len());
+            info!("Found {} backlogged entries, proceeding to commit", records.len());
 
-            if let Err(e) = self.write_all(&points) {
-                Err(InfluxError::Error(format!("Unable to commit backlogged measurements: {}", e)))
+            if let Err(e) = self.write_record(&record) {
+                return Err(InfluxError::Error(format!("Unable to commit backlogged record: {}", e)));
             }
             else
             {
@@ -99,20 +94,20 @@ impl<B> Client<B>
 
                 if let Err(e) = result
                 {
-                    let msg = format!("Failed to eliminate/truncate measurements from backlog: {}", e);
+                    let msg = format!("Failed to eliminate/truncate record from backlog: {}", e);
                     error!("{}", msg);
                     panic!("{}", msg);
                 }
                 else {
-                    Ok(())
+                    return Ok(());
                 }
             }
-        } else {
-            Ok(())
         }
+
+        Ok(())
     }
 
-    fn write_all(&self, points: &[Measurement]) -> InfluxResult<()>
+    fn write_record(&self, record: &Record) -> InfluxResult<()>
     {
         let url = format!("{}/write", self.target_url);
 
@@ -128,12 +123,12 @@ impl<B> Client<B>
 
             let mut params = vec![
                 ("db",        self.target_db.to_owned()),
-                ("precision", point.precision.to_string()),
+                // ("precision", point.precision.to_string()),
             ];
 
-            if let Some(policy) = &point.retpolicy {
-                params.push(("rp", policy.to_owned()));
-            }
+            // if let Some(policy) = &point.retpolicy {
+            //     params.push(("rp", policy.to_owned()));
+            // }
 
             let result = self.client.post(&url)
                 .basic_auth(&self.target_creds.user, Some(&self.target_creds.passwd))

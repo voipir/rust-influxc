@@ -28,11 +28,27 @@ fn run() -> InfluxResult<()>
 
     loop
     {
-        let point = Measurement::with_timestamp("test", ChronoUtc::now(), Precision::Milliseconds)
-            .add_tag("type", "main")
-            .add_field("asd", 123.into());
+        client.record("bucket", Precision::Seconds)
+            .measurement("sensor1")
+                .tag("floor", "second")
+                .tag("exposure", "west")
+                .field("temp", 123.into())
+                .field("brightness", 999.into())
+                .finish()
+            .measurement("sensor2")
+                .tag("floor", "second")
+                .tag("exposure", "east")
+                .field("temp", 321.into())
+                .field("brightness", 999.into())
+                .finish()
+            .commit();
 
-        client.write_one(point)?;
+
+        // let point = Measurement::with_timestamp("test", ChronoUtc::now(), Precision::Milliseconds)
+        //     .add_tag("type", "main")
+        //     .add_field("asd", 123.into());
+
+        // client.write_one(point)?;
 
         sleep(Duration::from_secs(1));
     }
