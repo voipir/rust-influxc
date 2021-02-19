@@ -1,15 +1,16 @@
 //!
 //! Client Connection and Interface to Database
 //!
-use crate::Credentials;
-use crate::Measurement;
-
+use crate::Record;
 use crate::Backlog;
+use crate::Credentials;
 
 use crate::InfluxError;
 use crate::InfluxResult;
 
+use crate::ReqwUrl;
 use crate::ReqwClient;
+use crate::ReqwMethod;
 
 
 #[derive(Deserialize)]
@@ -27,10 +28,9 @@ pub struct Client<B>
 
     backlog: Option<B>,
 
-    target_url:   String,
+    target_url:   ReqwUrl,
     target_db:    String,
     target_creds: Credentials,
-
 }
 
 
@@ -41,6 +41,12 @@ impl<B> Client<B>
     {
         let client = ReqwClient::builder()
             .build()?;
+
+        let url = match ReqwUrl::parse(&url)
+        {
+            Ok(url) => { url }
+            Err(e)  => { return Err(format!("Failed to parse URL: {} due to {}", url, e).into()) }
+        };
 
         // TODO ping database
 
@@ -59,16 +65,12 @@ impl<B> Client<B>
         self.backlog = Some(backlog); self
     }
 
-    pub fn write_one(&mut self, point: Measurement) -> InfluxResult<()>
+    pub fn write(&mut self, record: &Record) -> InfluxResult<()>
     {
         self.write_backlog()?;
-        self.write_all(&[point])
-    }
+        self.write_record(&record)?;
 
-    pub fn write_many(&mut self, points: &[Measurement]) -> InfluxResult<()>
-    {
-        self.write_backlog()?;
-        self.write_all(points)
+        Ok(())
     }
 }
 
@@ -78,78 +80,73 @@ impl<B> Client<B>
 {
     fn write_backlog(&mut self) -> InfluxResult<()>
     {
-        let points = if let Some(blg) = &mut self.backlog {
+        let records = if let Some(blg) = &mut self.backlog {
             blg.read_pending()?
         } else {
             Vec::new()
         };
 
-        if ! points.is_empty()
+        for record in records.iter()
         {
-            info!("Found {} backlogged entries, proceeding to commit", points.len());
+            info!("Found {} backlogged entries, proceeding to commit", records.len());
 
-            if let Err(e) = self.write_all(&points) {
-                Err(InfluxError::Error(format!("Unable to commit backlogged measurements: {}", e)))
+            if let Err(e) = self.write_record(&record) {
+                return Err(InfluxError::Error(format!("Unable to commit backlogged record: {}", e)));
             }
             else
             {
                 let result = self.backlog.as_mut()
                     .unwrap()
-                    .truncate_pending();
+                    .truncate_pending(&record);
 
-                if let Err(e) = result
-                {
-                    let msg = format!("Failed to eliminate/truncate measurements from backlog: {}", e);
+                if let Err(e) = result {
+                    let msg = format!("Failed to eliminate/truncate record from backlog: {}", e);
                     error!("{}", msg);
                     panic!("{}", msg);
+                } else {
+                    return Ok(());
                 }
-                else {
-                    Ok(())
-                }
-            }
-        } else {
-            Ok(())
-        }
-    }
-
-    fn write_all(&self, points: &[Measurement]) -> InfluxResult<()>
-    {
-        let url = format!("{}/write", self.target_url);
-
-        // TODO handle in one query, if necessary grouping by query parameters. For this we need to figure out how to
-        // handle precision and retention policy of the individual measurements. If moved out of measurement intself
-        // it would enable for bulk queries, but force persistent file backlog storage to store them separately from the
-        // serialized measurement.
-        for point in points.iter()
-        {
-            let line = point.to_line();
-
-            debug!("Inserting to influxdb: {}", line);
-
-            let mut params = vec![
-                ("db",        self.target_db.to_owned()),
-                ("precision", point.precision.to_string()),
-            ];
-
-            if let Some(policy) = &point.retpolicy {
-                params.push(("rp", policy.to_owned()));
-            }
-
-            let result = self.client.post(&url)
-                .basic_auth(&self.target_creds.user, Some(&self.target_creds.passwd))
-                .query(&params)
-                .body(line)
-                .send()?;
-
-            if result.status().is_success() {
-                continue;
-            } else if result.status().is_client_error() || result.status().is_server_error()
-            {
-                let error: ResponseError = result.json()?;
-                return Err(format!("Could not commit measurement to db: {}", error.error).into());
             }
         }
 
         Ok(())
+    }
+
+    fn write_record(&self, record: &Record) -> InfluxResult<()>
+    {
+        let mut url = self.target_url.clone();
+
+        url.set_path("/api/v2/write");
+
+        let mut builder = self.client.request(ReqwMethod::POST, url)
+            .query(&[
+                ("org",       &record.org),
+                ("bucket",    &record.bucket),
+                ("precision", &record.precision.to_string()),
+            ]);
+
+        match &self.target_creds
+        {
+            Credentials::Basic{user, passwd} => {
+                builder = builder.header("Authorization", format!("Basic {} {}", user, passwd));
+            }
+
+            Credentials::Token{token} => {
+                builder = builder.header("Authorization", format!("Token {}", token));
+            }
+        }
+
+        let reply = builder.body(record.to_line_buffer())
+            .send()?;
+
+        if reply.status().is_success() {
+            Ok(())
+        } else if reply.status().is_client_error() || reply.status().is_server_error()
+        {
+            let error: ResponseError = reply.json()?;
+            Err(format!("Could not commit record to db: {}", error.error).into())
+        } else {
+            Err(format!("Something else happened. Status: {:?}", reply.status()).into())
+        }
     }
 }
