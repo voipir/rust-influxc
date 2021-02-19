@@ -6,6 +6,8 @@
 //!
 mod file;
 
+use std::fmt::Debug;
+
 pub use file::FileBacklog;
 
 use crate::Record;
@@ -13,15 +15,15 @@ use crate::InfluxResult;
 
 
 /// API definition that any backlog service needs to abide by so the Client can use it.
-pub trait Backlog: std::fmt::Debug
+pub trait Backlog: Debug + Send + Sync
 {
     /// Return any pending records that sits in backlog and requires to be commited.
     fn read_pending(&mut self) -> InfluxResult<Vec<Record>>;
 
     /// Write records that could not be commited, so they get written into backlog for future processing.
-    fn write_pending(&mut self, records: &[Record]) -> InfluxResult<()>;
+    fn write_pending(&mut self, record: &Record) -> InfluxResult<()>;
 
     /// Empty backlog from pending records. This gets called once all pending records have been
     /// successfully commited.
-    fn truncate_pending(&mut self) -> InfluxResult<()>;
+    fn truncate_pending(&mut self, record: &Record) -> InfluxResult<()>;
 }

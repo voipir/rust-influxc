@@ -2,19 +2,23 @@
 //! Measurement to be Stored
 //!
 use crate::Value;
+use crate::Precision;
 
-use crate::ChronoDateTime;
+use crate::Utc;
+use crate::DateTime;
 
 use std::collections::BTreeMap;
 
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Measurement
 {
-    pub name:      String,
-    pub tags:      BTreeMap<String, String>,
-    pub fields:    BTreeMap<String, Value>,
-    pub timestamp: Option<ChronoDateTime>,
+    pub name: String,
+
+    pub tags:   BTreeMap<String, String>,
+    pub fields: BTreeMap<String, Value>,
+
+    pub timestamp: DateTime,
 }
 
 
@@ -28,28 +32,28 @@ impl Measurement
             tags:   BTreeMap::new(),
             fields: BTreeMap::new(),
 
-            timestamp: None,
+            timestamp: Utc::now(),  // TODO stamp in Drop of a MeasurementBuilder taking reference to collection in Record
         }
     }
 
-    pub fn timestamp(mut self, timestamp: ChronoDateTime) -> Self
+    pub fn timestamp(&mut self, timestamp: DateTime) -> &mut Self
     {
-        self.timestamp = Some(timestamp); self
+        self.timestamp = timestamp; self
     }
 
-    pub fn add_tag(mut self, key: &str, value: &str) -> Self
+    pub fn tag(&mut self, key: &str, value: &str) -> &mut Self
     {
         self.tags.insert(key.to_owned(), value.to_owned());
         self
     }
 
-    pub fn add_field(mut self, key: &str, value: Value) -> Self
+    pub fn field(&mut self, key: &str, value: Value) -> &mut Self
     {
         self.fields.insert(key.to_owned(), value);
         self
     }
 
-    pub fn to_line(&self) -> String
+    pub fn to_line(&self, precision: &Precision) -> String
     {
         let mut line = self.name.to_owned();
 
@@ -75,22 +79,16 @@ impl Measurement
             line += &fieldline;
         }
 
-        // if let Some(ts) = self.timestamp
-        // {
-        //     line += " ";
+        line += " ";
 
-        //     match self.precision
-        //     {
-        //         Precision::Nanoseconds  => { line += &ts.timestamp_nanos().to_string();  }
-        //         Precision::Microseconds => { line += &(ts.timestamp_nanos() * 1000).to_string(); }
-        //         Precision::Milliseconds => { line += &ts.timestamp_millis().to_string(); }
-        //         Precision::Seconds      => { line += &(ts.timestamp() ).to_string(); }
-        //         Precision::Minutes      => { line += &(ts.timestamp() /   60).to_string(); }
-        //         Precision::Hours        => { line += &(ts.timestamp() / 3600).to_string(); }
-        //     }
-        // }
+        match precision
+        {
+            Precision::Nanoseconds  => { line += &self.timestamp.timestamp_nanos().to_string();  }
+            Precision::Microseconds => { line += &(self.timestamp.timestamp_nanos() * 1000).to_string(); }
+            Precision::Milliseconds => { line += &self.timestamp.timestamp_millis().to_string(); }
+            Precision::Seconds      => { line += &(self.timestamp.timestamp() ).to_string(); }
+        }
 
         line
     }
 }
-
