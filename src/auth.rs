@@ -6,7 +6,7 @@
 #[derive(Debug)]
 pub enum Credentials
 {
-    Basic {user: String, passwd: String},
+    Basic {user: String, passwd: String, cookie: Option<String>},
     Token {token: String},
 }
 
@@ -18,6 +18,7 @@ impl Credentials
         Self::Basic {
             user:   user.to_owned(),
             passwd: passwd.to_owned(),
+            cookie: None,
         }
     }
 

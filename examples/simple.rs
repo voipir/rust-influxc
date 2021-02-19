@@ -19,20 +19,20 @@ use std::thread::sleep;
 fn run() -> InfluxResult<()>
 {
     let creds   = Credentials::from_basic("testuser".into(), "testpasswd".into());
-    let backlog = FileBacklog::new("./ignore/backlog.json")?;
+    let backlog = FileBacklog::new("./ignore/backlog")?;
 
-    let mut client = Client::new("http://127.0.0.1:8086".into(), "test".into(), creds)?
+    let mut client = Client::new("http://127.0.0.1:8086".into(), creds)?
         .backlog(backlog);
 
     loop
     {
-        let mut record = Record::new("org", "bucket", Precision::Seconds);
+        let mut record = Record::new("org", "bucket", Precision::Milliseconds);
 
         record.measurement("sensor1")
             .tag("floor", "second")
             .tag("exposure", "west")
             .field("temp", 123.into())
-            .field("brightness", 999.into());
+            .field("brightness", 500.into());
 
         record.measurement("sensor2")
             .tag("floor", "second")
@@ -40,7 +40,9 @@ fn run() -> InfluxResult<()>
             .field("temp", 321.into())
             .field("brightness", 999.into());
 
-        client.write(&record)?;
+        if let Err(e) = client.write(&record) {
+            eprintln!("{}", e);
+        }
 
         sleep(Duration::from_secs(1));
     }

@@ -11,6 +11,7 @@ use crate::Record;
 use crate::Precision;
 
 use crate::InfluxError;
+use crate::InfluxErrorAnnotate;
 use crate::InfluxResult;
 
 use crate::json;
@@ -52,7 +53,10 @@ impl FileBacklog
 
         let mut archives = HashMap::new();
 
-        for entry in std::fs::read_dir(&dir)?
+        let listing = std::fs::read_dir(&dir)
+            .annotate(format!("While opening backlog directory: {:#?}", dir))?;
+
+        for entry in listing
         {
             let entry = entry?;
             let path  = entry.path();
@@ -61,7 +65,7 @@ impl FileBacklog
             archives.insert(path, file);
         }
 
-        Ok(Self {dir, archives: archives})
+        Ok(Self {dir, archives})
     }
 
     fn archive(&mut self, record: &Record) -> InfluxResult<&mut Archive>
@@ -84,8 +88,11 @@ impl Backlog for FileBacklog
     {
         let mut records = Vec::new();
 
-        for archive in self.archives.values_mut() {
-            records.push(archive.record()?);
+        for archive in self.archives.values_mut()
+        {
+            if let Some(record) = archive.record()? {
+                records.push(record);
+            }
         }
 
         Ok(records)
@@ -132,41 +139,48 @@ impl Archive
         Ok(Self {path, meta, handle: Some(handle), count})
     }
 
-    pub fn record(&mut self) -> InfluxResult<Record>
+    pub fn record(&mut self) -> InfluxResult<Option<Record>>
     {
-        self.prepare_handle(Some(SeekFrom::Start(0)))?;
-
-        if let Some(handle) = &self.handle
+        if self.count == 0 {
+            Ok(None)
+        }
+        else
         {
-            let reader = BufReader::new(handle);
+            self.prepare_handle(Some(SeekFrom::Start(0)))?;
 
-            let mut msrmts = Vec::new();
-
-            for (num, line) in reader.lines().enumerate()
+            if let Some(handle) = &self.handle
             {
-                let ln = line?;
+                let reader = BufReader::new(handle);
 
-                match json::from_str(&ln)
+                let mut msrmts = Vec::new();
+
+                for (num, line) in reader.lines().enumerate()
                 {
-                    Ok(msrmt) => {
-                        msrmts.push(msrmt)
-                    }
+                    let ln = line?;
 
-                    Err(e) => {
-                        error!("Failed to read line {}", num);
-                        return Err(e.into());
+                    match json::from_str(&ln)
+                    {
+                        Ok(msrmt) => {
+                            msrmts.push(msrmt)
+                        }
+
+                        Err(e) => {
+                            error!("Failed to read line {}", num);
+                            return Err(e.into());
+                        }
                     }
                 }
+
+                let mut record = Record::new(&self.meta.org, &self.meta.bucket, self.meta.precision);
+                record.measurements = msrmts;
+
+                Ok(Some(record))
             }
-
-            let mut record = Record::new(&self.meta.org, &self.meta.bucket, self.meta.precision);
-            record.measurements = msrmts;
-
-            Ok(record)
+            else {
+                panic!("handle preparation should have prevented this case");
+            }
         }
-        else {
-            panic!("handle preparation should have prevented this case");
-        }
+
     }
 
     pub fn append(&mut self, record: &Record) -> InfluxResult<()>
@@ -225,13 +239,13 @@ impl Archive
 
 fn open(path: &Path, truncate: bool) -> InfluxResult<File>
 {
-    Ok(
-        OpenOptions::new()
-            .read(true)
-            .write(true)
-            .truncate(truncate)
-            .open(path)?
-    )
+    OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(truncate)
+        .open(path)
+        .annotate(format!("While opening file: {:#?}", path))
 }
 
 
@@ -249,9 +263,9 @@ impl ArchiveMeta
     fn from_record(record: &Record) -> Self
     {
         Self {
-            org:       record.org.to_owned(),
-            bucket:    record.bucket.to_owned(),
-            precision: record.precision,
+            org:       record.org().to_owned(),
+            bucket:    record.bucket().to_owned(),
+            precision: record.precision().to_owned(),
         }
     }
 
