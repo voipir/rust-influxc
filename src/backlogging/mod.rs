@@ -6,22 +6,24 @@
 //!
 mod file;
 
+use std::fmt::Debug;
+
 pub use file::FileBacklog;
 
-use crate::Measurement;
+use crate::Record;
 use crate::InfluxResult;
 
 
 /// API definition that any backlog service needs to abide by so the Client can use it.
-pub trait Backlog
+pub trait Backlog: Debug + Send + Sync
 {
-    /// Return any pending measurement that sits in backlog and requires to be commited.
-    fn read_pending(&mut self) -> InfluxResult<Vec<Measurement>>;
+    /// Return any pending records that sits in backlog and requires to be commited.
+    fn read_pending(&mut self) -> InfluxResult<Vec<Record>>;
 
-    /// Write measurements that could not be commited, so they get written into backlog for future processing.
-    fn write_pending(&mut self, points: &[Measurement]) -> InfluxResult<()>;
+    /// Write records that could not be commited, so they get written into backlog for future processing.
+    fn write_pending(&mut self, record: &Record) -> InfluxResult<()>;
 
-    /// Empty backlog from pending measurements. This gets called once all pending measurements have been
+    /// Empty backlog from pending records. This gets called once all pending records have been
     /// successfully commited.
-    fn truncate_pending(&mut self) -> InfluxResult<()>;
+    fn truncate_pending(&mut self, record: &Record) -> InfluxResult<()>;
 }
