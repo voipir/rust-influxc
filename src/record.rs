@@ -10,45 +10,34 @@ use crate::ReqwRequestBuilder;
 #[derive(Debug)]
 pub struct Record
 {
-    org:       String,
-    bucket:    String,
-    precision: Precision,
-
+    pub(crate) org:          String,
+    pub(crate) bucket:       String,
+    pub(crate) precision:    Precision,
     pub(crate) measurements: Vec<Measurement>,
 }
 
 
 impl Record
 {
-    pub fn new(org: &str, bucket: &str, precision: Precision) -> Self
+    pub fn new(org: &str, bucket: &str) -> Self
     {
-        Self {org: org.to_owned(), bucket: bucket.to_owned(), precision, measurements: Vec::new()}
+        Self {
+            org:          org.to_owned(),
+            bucket:       bucket.to_owned(),
+            precision:    Precision::default(),
+            measurements: Vec::new()
+        }
+    }
+
+    pub fn precision(mut self, precision: Precision) -> Self
+    {
+        self.precision = precision; self
     }
 
     pub fn measurement<'r>(&'r mut self, name: &str) -> &'r mut Measurement
     {
         self.measurements.push(Measurement::new(name));
         self.measurements.last_mut().unwrap()
-    }
-
-    pub fn org(&self) -> &str
-    {
-        &self.org
-    }
-
-    pub fn bucket(&self) -> &str
-    {
-        &self.bucket
-    }
-
-    pub fn precision(&self) -> &Precision
-    {
-        &self.precision
-    }
-
-    pub fn measurements(&self) -> &[Measurement]
-    {
-        &self.measurements
     }
 }
 

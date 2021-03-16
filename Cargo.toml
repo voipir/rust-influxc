@@ -5,12 +5,12 @@ authors = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
 edition = "2018"
 
 [dependencies]
-log        = {version = "0.4.14"}
+log        = {version = "*"}
 serde      = {version = "^1", features = ["derive"]}
 serde_json = {version = "^1"}
-base64     = {version = "0.13.0"}
-chrono     = {version = "0.4.19", features = ["serde"]}
-reqwest    = {version = "0.11.0", features = ["blocking", "json"]}
+base64     = {version = "*"}
+chrono     = {version = "*", features = ["serde"]}
+reqwest    = {version = "*", features = ["blocking", "json"]}
 
 [dev-dependencies]
-flexi_logger = {version = "0.14.8"}
+flexi_logger = {version = "*"}

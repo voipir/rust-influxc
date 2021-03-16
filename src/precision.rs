@@ -50,3 +50,12 @@ impl fmt::Display for Precision
         }
     }
 }
+
+
+impl Default for Precision
+{
+    fn default() -> Self
+    {
+        Self::Nanoseconds
+    }
+}

@@ -26,7 +26,8 @@ fn run() -> InfluxResult<()>
 
     loop
     {
-        let mut record = Record::new("org", "bucket", Precision::Milliseconds);
+        let mut record = Record::new("org", "bucket")
+            .precision(Precision::Milliseconds);
 
         record.measurement("sensor1")
             .tag("floor", "second")

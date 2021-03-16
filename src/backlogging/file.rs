@@ -171,7 +171,9 @@ impl Archive
                     }
                 }
 
-                let mut record = Record::new(&self.meta.org, &self.meta.bucket, self.meta.precision);
+                let mut record = Record::new(&self.meta.org, &self.meta.bucket)
+                    .precision(self.meta.precision);
+
                 record.measurements = msrmts;
 
                 Ok(Some(record))
@@ -191,7 +193,7 @@ impl Archive
         {
             let mut writer = BufWriter::new(handle);
 
-            for msrmt in record.measurements()
+            for msrmt in record.measurements.iter()
             {
                 let line = json::to_string(msrmt)?;
 
@@ -263,9 +265,9 @@ impl ArchiveMeta
     fn from_record(record: &Record) -> Self
     {
         Self {
-            org:       record.org().to_owned(),
-            bucket:    record.bucket().to_owned(),
-            precision: record.precision().to_owned(),
+            org:       record.org.clone(),
+            bucket:    record.bucket.clone(),
+            precision: record.precision.clone(),
         }
     }
 
