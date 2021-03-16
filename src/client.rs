@@ -83,6 +83,11 @@ impl<B> Client<B>
             result
         }
     }
+
+    pub fn flush(&mut self) -> InfluxResult<()>
+    {
+        self.write_backlog()
+    }
 }
 
 
