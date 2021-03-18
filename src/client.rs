@@ -39,7 +39,12 @@ impl<B> Client<B>
 {
     pub fn new(url: String, creds: Credentials) -> InfluxResult<Self>
     {
+        let ignore_cert = std::env::var("INFLUX_UNSAFE_TLS").ok()
+            .unwrap_or("false".to_owned())
+            .parse()?;
+
         let client = ReqwClient::builder()
+            .danger_accept_invalid_certs(ignore_cert)
             .build()?;
 
         let url = match ReqwUrl::parse(&url)

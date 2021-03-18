@@ -7,9 +7,6 @@ use crate::ReqwError;
 
 use crate::Deserialize;
 
-use std::io;
-use std::error;
-
 pub type InfluxResult<T> = Result<T, InfluxError>;
 
 
@@ -26,8 +23,11 @@ pub enum InfluxError
     Error(String),
     Annotated(String, Box<InfluxError>),
 
+    // stdlib
+    Io(std::io::Error),
+    ParseBool(std::str::ParseBoolError),
+
     // 3d party
-    Io(io::Error),
     Json(JsonError),
     Reqwest(ReqwError),
 
@@ -101,11 +101,14 @@ impl<T, E> InfluxErrorAnnotate<T> for Result<T, E>
 }
 
 
-impl From<&str>         for InfluxError { fn from(err: &str)         -> InfluxError { InfluxError::Error(err.to_owned()) }}
-impl From<String>       for InfluxError { fn from(err: String)       -> InfluxError { InfluxError::Error(err)            }}
-impl From<io::Error>    for InfluxError { fn from(err: io::Error)    -> InfluxError { InfluxError::Io(err)               }}
-impl From<JsonError>    for InfluxError { fn from(err: JsonError)    -> InfluxError { InfluxError::Json(err)             }}
-impl From<ReqwError>    for InfluxError { fn from(err: ReqwError)    -> InfluxError { InfluxError::Reqwest(err)          }}
+impl From<&str>   for InfluxError { fn from(err: &str)   -> InfluxError { InfluxError::Error(err.to_owned()) }}
+impl From<String> for InfluxError { fn from(err: String) -> InfluxError { InfluxError::Error(err) }}
+
+impl From<std::io::Error>           for InfluxError { fn from(err: std::io::Error)           -> InfluxError { InfluxError::Io(err) }}
+impl From<std::str::ParseBoolError> for InfluxError { fn from(err: std::str::ParseBoolError) -> InfluxError { InfluxError::ParseBool(err) }}
+
+impl From<JsonError> for InfluxError { fn from(err: JsonError) -> InfluxError { InfluxError::Json(err) }}
+impl From<ReqwError> for InfluxError { fn from(err: ReqwError) -> InfluxError { InfluxError::Reqwest(err) }}
 
 
 impl std::fmt::Display for InfluxError
@@ -117,7 +120,9 @@ impl std::fmt::Display for InfluxError
             Self::Error(ref err)        => { write!(f, "{}", err) }
             Self::Annotated(ref msg, _) => { write!(f, "{}", msg) },
 
-            Self::Io(ref err)         => { write!(f, "Io Error: {}",      err) }
+            Self::Io(ref err)        => { write!(f, "Io Error: {}",      err) }
+            Self::ParseBool(ref err) => { write!(f, "Parse Bool Error: {}",      err) }
+
             Self::Json(ref err)       => { write!(f, "Json Error: {}",    err) }
             Self::Reqwest(ref err)    => { write!(f, "Reqwest Error: {}", err) }
 
@@ -178,18 +183,20 @@ impl std::fmt::Display for ApiOversizeError
 }
 
 
-impl error::Error for InfluxError
+impl std::error::Error for InfluxError
 {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)>
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)>
     {
         match *self
         {
             InfluxError::Error(_)              => { None }
             InfluxError::Annotated(_, ref err) => { Some(err) }
 
-            InfluxError::Io(ref err)         => { Some(err) }
-            InfluxError::Json(ref err)       => { Some(err) }
-            InfluxError::Reqwest(ref err)    => { Some(err) }
+            InfluxError::Io(ref err)        => { Some(err) }
+            InfluxError::ParseBool(ref err) => { Some(err) }
+
+            InfluxError::Json(ref err)    => { Some(err) }
+            InfluxError::Reqwest(ref err) => { Some(err) }
 
             InfluxError::AuthUnauthorized(_)     => { None }
             InfluxError::AuthAccountDisabled(_)  => { None }
