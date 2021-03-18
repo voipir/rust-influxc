@@ -297,9 +297,9 @@ impl ArchiveMeta
 
     fn to_path(&self) -> PathBuf
     {
-        let name  = format!("{}_{}_{}.log", self.org, self.bucket, self.precision.to_string());
+        let name  = format!("{}_{}_{}", self.org, self.bucket, self.precision.to_string());
         let enc32 = b32::encode(b32::Alphabet::RFC4648 {padding: false}, name.as_bytes());
-        let path  = PathBuf::from(enc32);
+        let path  = PathBuf::from(format!("{}.log", enc32));
 
         path
     }
