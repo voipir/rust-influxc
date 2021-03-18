@@ -8,6 +8,7 @@ edition = "2018"
 log        = {version = "*"}
 serde      = {version = "^1", features = ["derive"]}
 serde_json = {version = "^1"}
+base32     = {version = "*"}
 base64     = {version = "*"}
 chrono     = {version = "*", features = ["serde"]}
 reqwest    = {version = "*", features = ["blocking", "json"]}

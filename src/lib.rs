@@ -9,7 +9,10 @@ use serde::Deserialize;
 use serde_json as json;
 use serde_json::error::Error as JsonError;
 
+use base32 as b32;
 use base64 as b64;
+
+// const B32RFC4648 = b32::Alphabet::RFC4648 {padding: false};
 
 use reqwest::Url    as ReqwUrl;
 use reqwest::Error  as ReqwError;

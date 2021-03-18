@@ -14,6 +14,7 @@ use crate::InfluxError;
 use crate::InfluxErrorAnnotate;
 use crate::InfluxResult;
 
+use crate::b32;
 use crate::json;
 
 use std::fs::File;
@@ -119,7 +120,6 @@ impl Backlog for FileBacklog
 #[derive(Debug)]
 struct Archive
 {
-    path:   PathBuf,
     meta:   ArchiveMeta,
     handle: Option<File>,
     count:  usize,
@@ -130,13 +130,12 @@ impl Archive
 {
     pub fn open(path: &Path) -> InfluxResult<Self>
     {
-        let path   = path.to_owned();
         let meta   = ArchiveMeta::from_path(&path)?;
         let handle = open(&path, false)?;
         let bfrd   = BufReader::new(&handle);
         let count  = bfrd.lines().count();
 
-        Ok(Self {path, meta, handle: Some(handle), count})
+        Ok(Self {meta, handle: Some(handle), count})
     }
 
     pub fn record(&mut self) -> InfluxResult<Option<Record>>
@@ -214,7 +213,7 @@ impl Archive
 
     pub fn truncate(&mut self) -> InfluxResult<()>
     {
-        std::fs::remove_file(&self.path)?;  // to keep dir as clean as possible from empty backlogs
+        std::fs::remove_file(&self.meta.to_path())?;  // to keep dir as clean as possible from empty backlogs
 
         self.handle = None;
         self.count  = 0;
@@ -225,7 +224,7 @@ impl Archive
     fn prepare_handle(&mut self, seek: Option<SeekFrom>) -> InfluxResult<()>
     {
         if self.handle.is_none() {
-            self.handle = Some(open(&self.path, false)?);
+            self.handle = Some(open(&self.meta.to_path(), false)?);
         }
 
         let handle = self.handle.as_mut().unwrap();
@@ -276,14 +275,17 @@ impl ArchiveMeta
         let stem = path.file_stem()
             .ok_or::<InfluxError>(format!("Could not extract file stem from: {:#?}", path).into())?;
 
-        let name = stem.to_str()
-            .ok_or::<InfluxError>(format!("Could not determine name from path: {:#?}", path).into())?;
+        let dec32 = b32::decode(b32::Alphabet::RFC4648 {padding: false}, stem.to_str().unwrap())
+            .ok_or::<InfluxError>(format!("Could not base32 decode file name for its parts: {:#?}", path).into())?;
+
+        let name = String::from_utf8(dec32)
+            .map_err(|e| InfluxError::Error(format!("Invalid UTF8 while decoding archive path '{:#?}': {}", path, e)))?;
 
         let parts = name.split("_")
             .collect::<Vec<&str>>();
 
         if parts.len() < 3 {
-            Err(format!("Could not determine name from path: {:#?}", path).into())
+            Err(format!("Could not determine archive name from path: {:#?}", path).into())
         } else {
             let org       = parts[0].to_owned();
             let bucket    = parts[1].to_owned();
@@ -295,8 +297,9 @@ impl ArchiveMeta
 
     fn to_path(&self) -> PathBuf
     {
-        let name = format!("{}_{}_{}.log", self.org, self.bucket, self.precision.to_string());
-        let path = PathBuf::from(name);
+        let name  = format!("{}_{}_{}.log", self.org, self.bucket, self.precision.to_string());
+        let enc32 = b32::encode(b32::Alphabet::RFC4648 {padding: false}, name.as_bytes());
+        let path  = PathBuf::from(enc32);
 
         path
     }
