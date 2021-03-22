@@ -18,11 +18,12 @@ use std::thread::sleep;
 
 fn run() -> InfluxResult<()>
 {
-    let creds   = Credentials::from_basic("testuser".into(), "testpasswd".into());
+    let creds   = Credentials::from_basic("testuser", "testpasswd");
     let backlog = FileBacklog::new("./ignore/backlog")?;
 
-    let mut client = Client::new("http://127.0.0.1:8086".into(), creds)?
-        .backlog(backlog);
+    let mut client = Client::build("http://127.0.0.1:8086".into(), creds)
+        .backlog(Box::new(backlog))
+        .finish()?;
 
     let mut rec = Record::new("org", "bucket")
         .precision(Precision::Milliseconds);

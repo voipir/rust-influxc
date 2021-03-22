@@ -2,8 +2,10 @@
 //! Client Connection and Interface to Database
 //!
 use crate::Record;
-use crate::Backlog;
 use crate::Credentials;
+use crate::ClientBuilder;
+
+use crate::Backlog;
 
 use crate::InfluxError;
 use crate::InfluxResult;
@@ -22,25 +24,27 @@ use crate::ReqwRequestBuilder;
 
 
 #[derive(Debug)]
-pub struct Client<B>
-    where B: Backlog
+pub struct Client
 {
+    url:    ReqwUrl,
+    creds:  Credentials,
     client: ReqwClient,
 
-    backlog: Option<B>,
-
-    url:   ReqwUrl,
-    creds: Credentials,
+    backlog: Box<dyn Backlog>,
 }
 
 
-impl<B> Client<B>
-    where B: Backlog
+impl Client
 {
-    pub fn new(url: String, creds: Credentials) -> InfluxResult<Self>
+    pub fn build(url: String, creds: Credentials) -> ClientBuilder
+    {
+        ClientBuilder::new(url, creds)
+    }
+
+    pub fn new(url: String, creds: Credentials, backlog: Box<dyn Backlog>) -> InfluxResult<Self>
     {
         let ignore_cert = std::env::var("INFLUX_UNSAFE_TLS").ok()
-            .unwrap_or("false".to_owned())
+            .unwrap_or_else(|| "false".to_owned())
             .parse()?;
 
         let client = ReqwClient::builder()
@@ -53,36 +57,29 @@ impl<B> Client<B>
             Err(e)  => { return Err(format!("Failed to parse URL: {} due to {}", url, e).into()) }
         };
 
-        let mut this = Self {client, url, creds, backlog: None};
+        let mut this = Self {client, url, creds, backlog};
 
         this.authenticate()?;
 
         Ok(this)
     }
 
-    pub fn backlog(mut self, backlog: B) -> Self
-    {
-        self.backlog = Some(backlog); self
-    }
+    // pub fn backlog(mut self, backlog: B) -> Self
+    // {
+    //     self.backlog = backlog; self
+    // }
 
     pub fn write(&mut self, record: &Record) -> InfluxResult<()>
     {
-        if let Err(e) = self.write_backlog()
-        {
-            if let Some(ref mut backlog) = self.backlog {
-                backlog.write_pending(&record)?;
-            }
-
-            Err(e)
+        if let Err(e) = self.write_backlog() {
+            self.backlog.write_pending(&record)?; Err(e)
         }
         else
         {
             let result = self.write_record(&record);
 
             if result.is_err() {
-                if let Some(ref mut backlog) = self.backlog {
-                    backlog.write_pending(&record)?;
-                }
+                self.backlog.write_pending(&record)?;
             }
 
             result
@@ -97,16 +94,11 @@ impl<B> Client<B>
 
 
 /// Private interface
-impl<B> Client<B>
-    where B: Backlog
+impl Client
 {
     fn write_backlog(&mut self) -> InfluxResult<()>
     {
-        let records = if let Some(blg) = &mut self.backlog {
-            blg.read_pending()?
-        } else {
-            Vec::new()
-        };
+        let records = self.backlog.read_pending()?;
 
         for record in records.iter()
         {
@@ -117,15 +109,15 @@ impl<B> Client<B>
             }
             else
             {
-                let result = self.backlog.as_mut()
-                    .unwrap()
-                    .truncate_pending(&record);
+                let result = self.backlog.truncate_pending(&record);
 
-                if let Err(e) = result {
+                if let Err(e) = result
+                {
                     let msg = format!("Failed to eliminate/truncate record from backlog: {}", e);
                     error!("{}", msg);
                     panic!("{}", msg);
-                } else {
+                }
+                else {
                     return Ok(());
                 }
             }
@@ -190,7 +182,7 @@ impl<B> Client<B>
                             if let Ok(s) = cookie.to_str() {
                                 s.to_owned()
                             } else {
-                                Err(format!("Failed to extract session cookie string: {:#?}", cookie))?
+                                return Err(format!("Failed to extract session cookie string: {:#?}", cookie).into());
                             }
                         };
 
@@ -201,9 +193,9 @@ impl<B> Client<B>
                     }
                 }
 
-                401 => { Err(InfluxError::AuthUnauthorized(rep.json::<ApiGenericError>()?))?; }
-                403 => { Err(InfluxError::AuthAccountDisabled(rep.json::<ApiGenericError>()?))?; }
-                _   => { Err(InfluxError::AuthUnknown(rep.json::<ApiGenericError>()?))?; }
+                401 => { return Err(InfluxError::AuthUnauthorized(rep.json::<ApiGenericError>()?)); }
+                403 => { return Err(InfluxError::AuthAccountDisabled(rep.json::<ApiGenericError>()?)); }
+                _   => { return Err(InfluxError::AuthUnknown(rep.json::<ApiGenericError>()?)); }
             }
         }
 

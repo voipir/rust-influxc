@@ -85,6 +85,7 @@ impl FileBacklog
 
 impl Backlog for FileBacklog
 {
+    #[inline]
     fn read_pending(&mut self) -> InfluxResult<Vec<Record>>
     {
         let mut records = Vec::new();
@@ -99,6 +100,7 @@ impl Backlog for FileBacklog
         Ok(records)
     }
 
+    #[inline]
     fn write_pending(&mut self, record: &Record) -> InfluxResult<()>
     {
         self.archive(record)?
@@ -107,6 +109,7 @@ impl Backlog for FileBacklog
         Ok(())
     }
 
+    #[inline]
     fn truncate_pending(&mut self, record: &Record) -> InfluxResult<()>
     {
         self.archive(record)?
@@ -171,7 +174,7 @@ impl Archive
                 }
 
                 let mut record = Record::new(&self.meta.org, &self.meta.bucket)
-                    .precision(self.meta.precision);
+                    .precision(self.meta.precision.clone());
 
                 record.measurements = msrmts;
 
@@ -196,8 +199,8 @@ impl Archive
             {
                 let line = json::to_string(msrmt)?;
 
-                writer.write(line.as_bytes())?;
-                writer.write(b"\n")?;
+                writer.write_all(line.as_bytes())?;
+                writer.write_all(b"\n")?;
 
                 self.count += 1;
             }
@@ -273,15 +276,15 @@ impl ArchiveMeta
     fn from_path(path: &Path) -> InfluxResult<Self>
     {
         let stem = path.file_stem()
-            .ok_or::<InfluxError>(format!("Could not extract file stem from: {:#?}", path).into())?;
+            .ok_or_else::<InfluxError, _>(|| format!("Could not extract file stem from: {:#?}", path).into())?;
 
         let dec32 = b32::decode(b32::Alphabet::RFC4648 {padding: false}, stem.to_str().unwrap())
-            .ok_or::<InfluxError>(format!("Could not base32 decode file name for its parts: {:#?}", path).into())?;
+            .ok_or_else::<InfluxError, _>(|| format!("Could not base32 decode file name for its parts: {:#?}", path).into())?;
 
         let name = String::from_utf8(dec32)
             .map_err(|e| InfluxError::Error(format!("Invalid UTF8 while decoding archive path '{:#?}': {}", path, e)))?;
 
-        let parts = name.split("_")
+        let parts = name.split('_')
             .collect::<Vec<&str>>();
 
         if parts.len() < 3 {
@@ -299,8 +302,7 @@ impl ArchiveMeta
     {
         let name  = format!("{}_{}_{}", self.org, self.bucket, self.precision.to_string());
         let enc32 = b32::encode(b32::Alphabet::RFC4648 {padding: false}, name.as_bytes());
-        let path  = PathBuf::from(format!("{}.log", enc32));
 
-        path
+        PathBuf::from(format!("{}.log", enc32))
     }
 }

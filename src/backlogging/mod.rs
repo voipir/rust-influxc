@@ -27,3 +27,33 @@ pub trait Backlog: Debug + Send + Sync
     /// successfully commited.
     fn truncate_pending(&mut self, record: &Record) -> InfluxResult<()>;
 }
+
+
+/// Backlog that does nothing
+#[derive(Debug)]
+pub struct NoopBacklog;
+
+
+impl NoopBacklog
+{
+    pub fn new() -> Self
+    {
+        Self {}
+    }
+}
+
+
+impl Backlog for NoopBacklog
+{
+    fn read_pending(&mut self) -> InfluxResult<Vec<Record>> {
+        Ok(Vec::new())
+    }
+
+    fn write_pending(&mut self, _: &Record) -> InfluxResult<()> {
+        Ok(())
+    }
+
+    fn truncate_pending(&mut self, _: &Record) -> InfluxResult<()> {
+        Ok(())
+    }
+}

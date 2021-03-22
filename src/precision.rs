@@ -6,7 +6,7 @@ use crate::InfluxError;
 use std::fmt;
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Precision
 {
     Nanoseconds,

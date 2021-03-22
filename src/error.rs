@@ -166,7 +166,7 @@ impl std::fmt::Display for ApiMalformationError
         write!(f, "code={}, err={}, line={}, message={}, op={}",
             self.code,
             self.err,
-            self.line.map(|v| v.to_string()).unwrap_or("n/a".to_owned()),
+            self.line.map(|v| v.to_string()).unwrap_or_else(|| "n/a".to_owned()),
             self.message,
             self.op
         )

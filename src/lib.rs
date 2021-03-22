@@ -1,6 +1,9 @@
 //!
 //! InfluxDB Client Library
 //!
+#![allow(clippy::new_without_default)]
+#![allow(clippy::suspicious_else_formatting)]
+
 #[macro_use] extern crate log;
 #[macro_use] extern crate serde;
 
@@ -32,6 +35,7 @@ mod error;
 mod value;
 mod client;
 mod record;
+mod builder;
 mod precision;
 mod backlogging;
 mod measurement;
@@ -56,9 +60,12 @@ pub use client::Client;
 
 pub use record::Record;
 
+pub use builder::ClientBuilder;
+
 pub use precision::Precision;
 
 pub use backlogging::Backlog;
 pub use backlogging::FileBacklog;
+pub use backlogging::NoopBacklog;
 
 pub use measurement::Measurement;
