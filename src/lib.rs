@@ -4,6 +4,7 @@
 #![allow(clippy::new_without_default)]
 #![allow(clippy::suspicious_else_formatting)]
 
+// Imports
 #[macro_use] extern crate log;
 #[macro_use] extern crate serde;
 
@@ -15,8 +16,6 @@ use serde_json::error::Error as JsonError;
 use base32 as b32;
 use base64 as b64;
 
-// const B32RFC4648 = b32::Alphabet::RFC4648 {padding: false};
-
 use reqwest::Url    as ReqwUrl;
 use reqwest::Error  as ReqwError;
 use reqwest::Method as ReqwMethod;
@@ -27,9 +26,7 @@ use reqwest::blocking::RequestBuilder as ReqwRequestBuilder;
 type Utc      = chrono::Utc;
 type DateTime = chrono::DateTime<chrono::Utc>;
 
-//
-// Internals
-//
+// Internals/Exports
 mod auth;
 mod error;
 mod value;
@@ -45,9 +42,6 @@ use error::ApiGenericError;
 use error::ApiOversizeError;
 use error::ApiMalformationError;
 
-//
-// Exports
-//
 pub use auth::Credentials;
 
 pub use error::InfluxError;
