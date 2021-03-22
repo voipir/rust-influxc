@@ -64,11 +64,6 @@ impl Client
         Ok(this)
     }
 
-    // pub fn backlog(mut self, backlog: B) -> Self
-    // {
-    //     self.backlog = backlog; self
-    // }
-
     pub fn write(&mut self, record: &Record) -> InfluxResult<()>
     {
         if let Err(e) = self.write_backlog() {
@@ -134,7 +129,7 @@ impl Client
 
         let mut builder = self.client.request(ReqwMethod::POST, url);
 
-        builder = record.to_write_request(builder);
+        builder = record.to_write_request(builder)?;
         builder = self.inject_credentials(builder)?;
 
         debug!("Request: {:#?}", builder);

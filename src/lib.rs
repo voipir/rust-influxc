@@ -10,6 +10,9 @@
 
 use serde::Deserialize;
 
+use flate2::GzBuilder   as FlateGzipBuilder;
+use flate2::Compression as FlateLevel;
+
 use serde_json as json;
 use serde_json::error::Error as JsonError;
 

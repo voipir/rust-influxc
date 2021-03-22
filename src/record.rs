@@ -4,7 +4,14 @@
 use crate::Precision;
 use crate::Measurement;
 
+use crate::InfluxResult;
+
+use crate::FlateLevel;
+use crate::FlateGzipBuilder;
+
 use crate::ReqwRequestBuilder;
+
+use std::io::Write;
 
 
 #[derive(Debug)]
@@ -62,15 +69,27 @@ impl Record
             .join("\n")
     }
 
-    pub(crate) fn to_write_request(&self, mut builder: ReqwRequestBuilder) -> ReqwRequestBuilder
+    pub(crate) fn to_write_request(&self, mut builder: ReqwRequestBuilder) -> InfluxResult<ReqwRequestBuilder>
     {
+        // buffer compression
+        let mut gzipenc = FlateGzipBuilder::new()
+            .write(Vec::new(), FlateLevel::default());
+
+        gzipenc.write_all(self.to_line_buffer().as_bytes())?;
+
+        let buffer = gzipenc.finish()?;
+
+        // headers and query path
+        builder = builder.header("Content-Encoding", "gzip");
+
         builder = builder.query(&[
             ("org",       &self.org),
             ("bucket",    &self.bucket),
             ("precision", &self.precision.to_string()),
         ]);
 
-        builder.body(self.to_line_buffer())
+        // buffer body
+        Ok(builder.body(buffer))
     }
 }
 
