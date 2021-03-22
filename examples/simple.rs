@@ -24,24 +24,24 @@ fn run() -> InfluxResult<()>
     let mut client = Client::new("http://127.0.0.1:8086".into(), creds)?
         .backlog(backlog);
 
+    let mut rec = Record::new("org", "bucket")
+        .precision(Precision::Milliseconds);
+
     loop
     {
-        let mut record = Record::new("org", "bucket")
-            .precision(Precision::Milliseconds);
-
-        record.measurement("sensor1")
+        rec.measurement("sensor1")
             .tag("floor", "second")
             .tag("exposure", "west")
             .field("temp", 123.into())
             .field("brightness", 500.into());
 
-        record.measurement("sensor2")
+        rec.measurement("sensor2")
             .tag("floor", "second")
             .tag("exposure", "east")
             .field("temp", 321.into())
             .field("brightness", 999.into());
 
-        if let Err(e) = client.write(&record) {
+        if let Err(e) = client.write(&rec) {
             eprintln!("{}", e);
         }
 
