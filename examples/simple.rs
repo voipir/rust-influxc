@@ -22,7 +22,7 @@ fn run() -> InfluxResult<()>
     let backlog = FileBacklog::new("./ignore/backlog")?;
 
     let mut client = Client::build("http://127.0.0.1:8086".into(), creds)
-        .backlog(Box::new(backlog))
+        .backlog(backlog)
         .finish()?;
 
     let mut rec = Record::new("org", "bucket")

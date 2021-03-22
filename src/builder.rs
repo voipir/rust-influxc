@@ -34,9 +34,9 @@ impl ClientBuilder
 
     /// Add backlog to client, so records and measurements get stored as log as
     /// they fail to be committed. Either due to conectivity or misconfiguration.
-    pub fn backlog(mut self, backlog: Box<dyn Backlog>) -> Self
+    pub fn backlog<B: Backlog + 'static>(mut self, backlog: B) -> Self
     {
-        self.backlog = Some(backlog); self
+        self.backlog = Some(Box::new(backlog)); self
     }
 
     /// Consume this builder to assemble and return the final Client instance
