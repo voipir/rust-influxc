@@ -23,6 +23,7 @@ use crate::ReqwMethod;
 use crate::ReqwRequestBuilder;
 
 
+/// The basic unit of interactino with the InfluxDB API.
 #[derive(Debug)]
 pub struct Client
 {
@@ -36,11 +37,13 @@ pub struct Client
 
 impl Client
 {
+    /// Create a builder to parametrize and construct this `Client`.
     pub fn build(url: String, creds: Credentials) -> ClientBuilder
     {
         ClientBuilder::new(url, creds)
     }
 
+    /// Directly construct this `Client`.
     pub fn new(url: String, creds: Credentials, backlog: Box<dyn Backlog>) -> InfluxResult<Self>
     {
         let ignore_cert = std::env::var("INFLUX_UNSAFE_TLS").ok()
@@ -64,6 +67,7 @@ impl Client
         Ok(this)
     }
 
+    /// Submit a `Record` to be written to InfluxDB. Or backlogged if you set a backlogger.
     pub fn write(&mut self, record: &Record) -> InfluxResult<()>
     {
         if let Err(e) = self.write_backlog() {
@@ -81,6 +85,7 @@ impl Client
         }
     }
 
+    /// Submit pending/backlogged `Records` to writing. It will attempt to flush them to database.
     pub fn flush(&mut self) -> InfluxResult<()>
     {
         self.write_backlog()

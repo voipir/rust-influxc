@@ -7,47 +7,100 @@ use crate::ReqwError;
 
 use crate::Deserialize;
 
-pub type InfluxResult<T> = Result<T, InfluxError>;
+
+pub(crate) type InfluxResult<T> = Result<T, InfluxError>;
 
 
-pub trait InfluxErrorAnnotate<T>
+pub(crate) trait InfluxErrorAnnotate<T>
 {
     fn annotate<M: ToString>(self, msg: M) -> InfluxResult<T>;
 }
 
 
+/// ## Chaining Support
+///
+/// Project wide enumeration of errors that this library emits. If you have your own error type, you might want to chain
+/// this error into it like so:
+///
+/// ```rust
+/// #[derive(Debug)]
+/// enum MyError
+/// {
+///     Influx(InfluxError)
+/// }
+///
+/// impl From<InfluxError> for MyError {
+///     fn from(other: InfluxError) -> Self {
+///         Self::Influx(other)
+///     }
+/// }
+///
+/// impl std::fmt::Display for MyError {
+///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+///         match self {
+///             Self::Influx(ref other) => write!(f, "{}", other)
+///         }
+///     }
+/// }
+///
+/// impl std::error::Error for MyError {
+///     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+///         match self {
+///             Self::Influx(ref other) => Some(other)
+///         }
+///     }
+/// }
+/// ```
 #[derive(Debug)]
 pub enum InfluxError
 {
-    // generic
+    /// Internal error message
     Error(String),
+
+    /// Annotated error message. Allows for context providing in case of an error.
     Annotated(String, Box<InfluxError>),
 
-    // stdlib
+    /// Chaining of `std::io::Error`
     Io(std::io::Error),
+
+    /// Chaining of `std::str::ParseBoolError`
     ParseBool(std::str::ParseBoolError),
 
-    // 3d party
+    /// Chaining of `serde_json::error::Error`
     Json(JsonError),
+
+    /// Chaining of `reqwest::error::Error`
     Reqwest(ReqwError),
 
-    // /api/v2/signin
+    /// Authentication API: Not authorized (log-in missing) error.
     AuthUnauthorized(ApiGenericError),
+
+    /// Authentication API: Account is currently disabled. Check
     AuthAccountDisabled(ApiGenericError),
+
+    /// Authentication API: Unknown credentials. Invalid username/passwd in basic?. Invalid token?
     AuthUnknown(ApiGenericError),
 
-    // /api/v2/write
+    /// Write API: Malformed write request. Something is not properly formatted for InfluxDB. Please report bug.
     WriteMalformed(ApiMalformationError),
 
+    /// Write API: Not authorized to write to that bucket. Check permissions in InfluxDB GUI.
     WriteUnauthorized(ApiGenericError),
+
+    /// Write API: Not yet authenticated for write. Authenticate first.
     WriteUnauthenticated(ApiGenericError),
+
+    /// Write API: Request is to big in size. Reduce the amount of measurements in submitted record.
     WriteOversized(ApiOversizeError),
 
+    /// Write API: Request limit reached. Try again later.
     WriteOverquota(ApiDelayError),
-    WriteUnready(ApiDelayError),
-    WriteUnknown(ApiGenericError),
 
-    // /api/v2/query - TODO
+    /// Write API: InfluxDB currently not ready. Try again later.
+    WriteUnready(ApiDelayError),
+
+    /// Write API: InfluxDB server side error. Investigate.
+    WriteUnknown(ApiGenericError),
 }
 
 

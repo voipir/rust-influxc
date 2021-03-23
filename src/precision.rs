@@ -6,12 +6,20 @@ use crate::InfluxError;
 use std::fmt;
 
 
+/// The time resolution the bucket is to keep its measurements
 #[derive(Debug, Clone)]
 pub enum Precision
 {
+    /// Self explanatory nanoseconds
     Nanoseconds,
+
+    /// Self explanatory microseconds
     Microseconds,
+
+    /// Self explanatory milliseconds
     Milliseconds,
+
+    /// Self explanatory seconds
     Seconds,
 }
 

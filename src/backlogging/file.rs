@@ -33,6 +33,8 @@ use std::path::PathBuf;
 use std::collections::HashMap;
 
 
+/// Backlog for the `Client` to persist `Record`s that could not be submitted to the InfluxDB due to conectivity or
+/// configuration errors.
 #[derive(Debug)]
 pub struct FileBacklog
 {
@@ -44,6 +46,7 @@ pub struct FileBacklog
 
 impl FileBacklog
 {
+    /// Construct file based backlog by providing a directory to write Record files to.
     pub fn new<P: AsRef<Path>>(dir: P) -> InfluxResult<Self>
     {
         let dir = PathBuf::from(dir.as_ref());

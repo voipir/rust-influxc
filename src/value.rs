@@ -4,13 +4,22 @@
 use std::fmt;
 
 
+/// Type primitives as supported by InfluxDB and their conversions from/to Rust primitives
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Value
 {
-    #[serde(rename="i64")]  Integer(i64),
-    #[serde(rename="f64")]  Float(f64),
-    #[serde(rename="str")]  String(String),
+    /// Self explanatory integer type
+    #[serde(rename="i64")] Integer(i64),
+
+    /// Self explanatory float type
+    #[serde(rename="f64")] Float(f64),
+
+    /// Self explanatory string type
+    #[serde(rename="str")] String(String),
+
+    /// Self explanatory boolean type
     #[serde(rename="bool")] Boolean(bool),
+
 }
 
 

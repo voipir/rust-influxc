@@ -7,7 +7,7 @@ use influxdb::FileBacklog;
 use influxdb::Record;
 use influxdb::Precision;
 use influxdb::Credentials;
-use influxdb::InfluxResult;
+use influxdb::InfluxError;
 
 use flexi_logger as logger;
 use flexi_logger::Logger;
@@ -16,7 +16,7 @@ use std::time::Duration;
 use std::thread::sleep;
 
 
-fn run() -> InfluxResult<()>
+fn run() -> Result<(), InfluxError>
 {
     let creds   = Credentials::from_basic("testuser", "testpasswd");
     let backlog = FileBacklog::new("./ignore/backlog")?;

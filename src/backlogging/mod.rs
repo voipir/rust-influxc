@@ -36,6 +36,7 @@ pub struct NoopBacklog;
 
 impl NoopBacklog
 {
+    /// Construct this dummy backlog that does nothing
     pub fn new() -> Self
     {
         Self {}

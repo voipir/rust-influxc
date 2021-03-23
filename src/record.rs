@@ -14,6 +14,10 @@ use crate::ReqwRequestBuilder;
 use std::io::Write;
 
 
+/// Coarse unit of recording. It keeps track of the organization, bucket and precision which are inherent to the concept
+/// of "schema" in SQL lingo.
+/// It gets filled with measurements that provide the "table name" (measurement) as well as "indexed columns" (tags) and
+/// values.
 #[derive(Debug)]
 pub struct Record
 {
@@ -26,6 +30,7 @@ pub struct Record
 
 impl Record
 {
+    /// Create a new measurement by specifying the owning organization and the bucket
     pub fn new(org: &str, bucket: &str) -> Self
     {
         Self {
@@ -36,11 +41,13 @@ impl Record
         }
     }
 
+    /// Set precision. It otherwise defaults to nanoseconds.
     pub fn precision(mut self, precision: Precision) -> Self
     {
         self.precision = precision; self
     }
 
+    /// Add and return a measurement for further parametrization.
     pub fn measurement<'r>(&'r mut self, name: &str) -> &'r mut Measurement
     {
         self.measurements.push(Measurement::new(name));
@@ -49,7 +56,6 @@ impl Record
 }
 
 
-/// Internal API - TODO hide from docs
 impl Record
 {
     pub(crate) fn to_lines(&self) -> Vec<String>

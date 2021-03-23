@@ -9,10 +9,22 @@ pub enum Credentials
 {
     /// HTTP Basic authentication pattern. This pattern authenticates at the server and receives
     /// back the token to use for subsequent queries against the API.
-    Basic {user: String, passwd: String, cookie: Option<String>},
+    Basic {
+        /// Username to authenticate with.
+        user: String,
+
+        /// Password to provide for authentication.
+        passwd: String,
+
+        /// Internally keeps track of the token provided by DB after basic auth.
+        cookie: Option<String>
+    },
 
     /// Provide token generated directly in the InfluxDB GUI or CLI.
-    Token {token: String},
+    Token {
+        /// Token to provide for authorization
+        token: String
+    },
 }
 
 
