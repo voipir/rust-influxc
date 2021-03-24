@@ -33,14 +33,14 @@ fn run() -> Result<(), InfluxError>
         rec.measurement("sensor1")
             .tag("floor", "second")
             .tag("exposure", "west")
-            .field("temp", 123.into())
-            .field("brightness", 500.into());
+            .field("temp", 123)
+            .field("brightness", 500);
 
         rec.measurement("sensor2")
             .tag("floor", "second")
             .tag("exposure", "east")
-            .field("temp", 321.into())
-            .field("brightness", 999.into());
+            .field("temp", 321)
+            .field("brightness", 999);
 
         if let Err(e) = client.write(&rec) {
             eprintln!("{}", e);

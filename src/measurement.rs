@@ -53,9 +53,9 @@ impl Measurement
     }
 
     /// Add a value field to this Measurement
-    pub fn field(&mut self, key: &str, value: Value) -> &mut Self
+    pub fn field<V: Into<Value>>(&mut self, key: &str, value: V) -> &mut Self
     {
-        self.fields.insert(key.to_owned(), value);
+        self.fields.insert(key.to_owned(), value.into());
         self
     }
 
