@@ -9,14 +9,11 @@ use influxc::Precision;
 use influxc::Credentials;
 use influxc::InfluxError;
 
-use flexi_logger as logger;
-use flexi_logger::Logger;
-
 use std::time::Duration;
 use std::thread::sleep;
 
 
-fn run() -> Result<(), InfluxError>
+fn main() -> Result<(), InfluxError>
 {
     let creds   = Credentials::from_basic("testuser", "testpasswd");
     let backlog = FileBacklog::new("./ignore/backlog")?;
@@ -47,18 +44,5 @@ fn run() -> Result<(), InfluxError>
         }
 
         sleep(Duration::from_secs(1));
-    }
-}
-
-
-fn main()
-{
-    Logger::with_env_or_str("info")
-        .format(logger::opt_format)
-        .start()
-        .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
-
-    if let Err(e) = run() {
-        println!("{}", e)
     }
 }
