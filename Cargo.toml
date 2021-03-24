@@ -1,11 +1,14 @@
 [package]
-name     = "influxc"
-version  = "0.4.2"
-edition  = "2018"
-authors  = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
-license  = "MIT"
-publish  = true
-keywords = ["influx", "influxdb"]
+name        = "influxc"
+version     = "0.4.2"
+edition     = "2018"
+authors     = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
+license     = "MIT"
+publish     = true
+description = "InfluxDB Client Library"
+keywords    = ["influx", "influxdb"]
+homepage    = "https://github.com/voipir/rust-influxc"
+repository  = "https://github.com/voipir/rust-influxc"
 
 [dependencies]
 log        = {version="*"}
