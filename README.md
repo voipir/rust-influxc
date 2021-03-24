@@ -4,20 +4,20 @@
 
 ### What this crate provides
 
-* Support for InfluxDB 2.x.
-* Backlog storage of Record's on failure to commit due to connectivity or configuration issues.
-* Build-in compression of requests.
+- Support for InfluxDB 2.x.
+- Backlog storage of Record's on failure to commit due to connectivity or configuration issues.
+- Build-in compression of requests.
 
 ### What it does not provide
 
-* Support for InfluxDB 1.x
+- Support for InfluxDB 1.x
 
 ### What is on the roadmap
 
-* Support for sending, processing responses to queries.
-* Support for mapping native types to query response data like sqlx.
-* Support for async/await as a feature.
-* Reduction of dependencies by switching the underlying reqwest library with hyper.
+- Support for sending, processing responses to queries.
+- Support for mapping native types to query response data like sqlx.
+- Support for async/await as a feature.
+- Reduction of dependencies by switching the underlying reqwest library with hyper.
 
 ## Basic Usage
 
