@@ -1,5 +1,8 @@
 # InfluxDB Client Library
 
+[![version](https://img.shields.io/crates/v/influxc.svg?style=flat-square)](https://crates.io/crates/influxc)
+[![docs](https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square)](https://docs.rs/influxc)
+
 ## About this crate
 
 ### What this crate provides
