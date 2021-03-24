@@ -1,6 +1,6 @@
 [package]
 name     = "influxc"
-version  = "0.4.1"
+version  = "0.4.2"
 edition  = "2018"
 authors  = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
 license  = "MIT"
