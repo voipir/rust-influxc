@@ -14,10 +14,10 @@
 
 ### What is on the roadmap
 
-- Support for sending, processing responses to queries.
-- Support for mapping native types to query response data like sqlx.
-- Support for async/await as a feature.
-- Reduction of dependencies by switching the underlying reqwest library with hyper.
+- Support for async/await as a feature. [#3](https://github.com/voipir/rust-influxc/issues/3)
+- Reduction of dependencies by switching the underlying reqwest library with hyper. [#4](https://github.com/voipir/rust-influxc/issues/4)
+- Support for sending, processing responses to queries. [#5](https://github.com/voipir/rust-influxc/issues/5)
+- Support for mapping native types to query response data like sqlx. [#6](https://github.com/voipir/rust-influxc/issues/6)
 
 ## Basic Usage
 
