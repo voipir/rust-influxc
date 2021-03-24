@@ -37,13 +37,13 @@ pub struct Client
 
 impl Client
 {
-    /// Create a builder to parametrize and construct this `Client`.
+    /// Create a builder to parametrize and construct this [Client](struct.Client.html).
     pub fn build(url: String, creds: Credentials) -> ClientBuilder
     {
         ClientBuilder::new(url, creds)
     }
 
-    /// Directly construct this `Client`.
+    /// Directly construct this [Client](struct.Client.html).
     pub fn new(url: String, creds: Credentials, backlog: Box<dyn Backlog>) -> InfluxResult<Self>
     {
         let ignore_cert = std::env::var("INFLUX_UNSAFE_TLS").ok()
@@ -67,7 +67,7 @@ impl Client
         Ok(this)
     }
 
-    /// Submit a `Record` to be written to InfluxDB. Or backlogged if you set a backlogger.
+    /// Submit a [Record](struct.Record.html) to be written to InfluxDB. Or backlogged if you set a backlogger.
     pub fn write(&mut self, record: &Record) -> InfluxResult<()>
     {
         if let Err(e) = self.write_backlog() {
@@ -85,7 +85,7 @@ impl Client
         }
     }
 
-    /// Submit pending/backlogged `Records` to writing. It will attempt to flush them to database.
+    /// Submit pending/backlogged [Records](struct.Record.html) to writing. It will attempt to flush them to database.
     pub fn flush(&mut self) -> InfluxResult<()>
     {
         self.write_backlog()

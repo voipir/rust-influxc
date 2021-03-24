@@ -60,16 +60,16 @@ pub enum InfluxError
     /// Annotated error message. Allows for context providing in case of an error.
     Annotated(String, Box<InfluxError>),
 
-    /// Chaining of `std::io::Error`
+    /// Chaining of [IoError](std::io::Error)
     Io(std::io::Error),
 
-    /// Chaining of `std::str::ParseBoolError`
+    /// Chaining of [ParseBoolError](std::str::ParseBoolError)
     ParseBool(std::str::ParseBoolError),
 
-    /// Chaining of `serde_json::error::Error`
+    /// Chaining of [JsonError](serde_json::error::Error)
     Json(JsonError),
 
-    /// Chaining of `reqwest::error::Error`
+    /// Chaining of [ReqwestError](reqwest::error::Error)
     Reqwest(ReqwError),
 
     /// Authentication API: Not authorized (log-in missing) error.

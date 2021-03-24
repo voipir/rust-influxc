@@ -14,7 +14,7 @@ use crate::Record;
 use crate::InfluxResult;
 
 
-/// API definition that any backlog service needs to abide by so the Client can use it.
+/// API definition that any backlog service needs to abide by so the [Client](struct.Client.html) can use it.
 pub trait Backlog: Debug + Send + Sync
 {
     /// Return any pending records that sits in backlog and requires to be commited.

@@ -10,8 +10,8 @@ use crate::DateTime;
 use std::collections::BTreeMap;
 
 
-/// The smallest unit of recording. Multiple of these Measurements are fit in a Record, which in turn is submitted to
-/// InfluxDB.
+/// The smallest unit of recording. Multiple of these Measurements are fit in a [Record](struct.Record.html), which in
+/// turn is submitted to InfluxDB.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Measurement
 {

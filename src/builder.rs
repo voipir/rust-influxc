@@ -10,7 +10,7 @@ use crate::NoopBacklog;
 use crate::InfluxResult;
 
 
-/// Builder to piece by piece assemble a Client instance
+/// Builder to piece by piece assemble a [Client](struct.Client.html) instance
 pub struct ClientBuilder
 {
     url:   String,
