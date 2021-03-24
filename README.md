@@ -22,13 +22,13 @@
 ## Basic Usage
 
 ```rust
-use influxdb::Client;
-use influxdb::FileBacklog;
+use influxc::Client;
+use influxc::FileBacklog;
 
-use influxdb::Record;
-use influxdb::Precision;
-use influxdb::Credentials;
-use influxdb::InfluxError;
+use influxc::Record;
+use influxc::Precision;
+use influxc::Credentials;
+use influxc::InfluxError;
 
 use std::time::Duration;
 use std::thread::sleep;
@@ -50,14 +50,14 @@ fn main() -> Result<(), InfluxError>
         rec.measurement("sensor1")
             .tag("floor", "second")
             .tag("exposure", "west")
-            .field("temp", 123.into())
-            .field("brightness", 500.into());
+            .field("temp", 123)
+            .field("brightness", 500);
 
         rec.measurement("sensor2")
             .tag("floor", "second")
             .tag("exposure", "east")
-            .field("temp", 321.into())
-            .field("brightness", 999.into());
+            .field("temp", 321)
+            .field("brightness", 999);
 
         if let Err(e) = client.write(&rec) {
             eprintln!("{}", e);

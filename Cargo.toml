@@ -1,8 +1,12 @@
 [package]
-name    = "influxdb"
-version = "0.4.1"
-authors = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
-edition = "2018"
+name         = "influxc"
+version      = "0.4.1"
+edition      = "2018"
+authors      = ["Leonhard Weber <leonhard.weber@voipir.cl>"]
+license      = "MIT"
+license-file = "LICENSE"
+publish      = true
+keywords     = ["influx", "influxdb"]
 
 [dependencies]
 log        = {version="*"}

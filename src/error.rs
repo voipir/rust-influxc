@@ -23,6 +23,8 @@ pub(crate) trait InfluxErrorAnnotate<T>
 /// this error into it like so:
 ///
 /// ```rust
+/// use influxc::InfluxError;
+///
 /// #[derive(Debug)]
 /// enum MyError
 /// {

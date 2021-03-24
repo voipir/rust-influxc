@@ -372,7 +372,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "influxdb"
+name = "influxc"
 version = "0.4.1"
 dependencies = [
  "base32",

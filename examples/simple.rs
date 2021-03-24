@@ -1,13 +1,13 @@
 //!
 //! Testing Sandbox
 //!
-use influxdb::Client;
-use influxdb::FileBacklog;
+use influxc::Client;
+use influxc::FileBacklog;
 
-use influxdb::Record;
-use influxdb::Precision;
-use influxdb::Credentials;
-use influxdb::InfluxError;
+use influxc::Record;
+use influxc::Precision;
+use influxc::Credentials;
+use influxc::InfluxError;
 
 use flexi_logger as logger;
 use flexi_logger::Logger;
