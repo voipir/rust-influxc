@@ -11,14 +11,11 @@ homepage    = "https://github.com/voipir/rust-influxc"
 repository  = "https://github.com/voipir/rust-influxc"
 
 [dependencies]
-log        = {version="*"}
-serde      = {version="^1", features=["derive"]}
-serde_json = {version="^1"}
-base32     = {version="*"}
-flate2     = {version="^1"}
-base64     = {version="*"}
-chrono     = {version="*", features=["serde"]}
-reqwest    = {version="*", features=["blocking", "json"]}
-
-[dev-dependencies]
-flexi_logger = {version="*"}
+log        = {version="0.4"}
+serde      = {version="1", features=["derive"]}
+serde_json = {version="1"}
+base32     = {version="0.4"}
+flate2     = {version="1"}
+base64     = {version="0.13"}
+chrono     = {version="0.4", features=["serde"]}
+reqwest    = {version="0.11", features=["blocking", "json"]}
